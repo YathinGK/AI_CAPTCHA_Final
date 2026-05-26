@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VideoCap – Developer Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0f1117;
+      --card:   #1a1d27;
+      --border: #2a2e3f;
+      --text:   #e2e8f0;
+      --sub:    #8892a4;
+      --accent: #FF6B35;
+      --green:  #22c55e;
+      --red:    #ef4444;
+      --blue:   #3b82f6;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+           background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px; background: var(--card); border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: .5rem;
+      position: fixed; top: 0; left: 0; height: 100vh;
+    }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1.1rem; font-weight: 800; color: var(--accent);
+      padding: .5rem .75rem; margin-bottom: .75rem;
+    }
+
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: .65rem .9rem; border-radius: 8px; cursor: pointer;
+      font-size: .875rem; font-weight: 500; color: var(--sub);
+      transition: background .15s, color .15s; text-decoration: none;
+    }
+    .sidebar-item:hover { background: rgba(255,107,53,.08); color: var(--text); }
+    .sidebar-item.active { background: rgba(255,107,53,.14); color: var(--accent); font-weight: 600; }
+
+    /* ── Main ── */
+    .main { margin-left: 240px; padding: 2rem; flex: 1; }
+
+    .page-title { font-size: 1.5rem; font-weight: 800; margin-bottom: .4rem; }
+    .page-sub   { font-size: .875rem; color: var(--sub); margin-bottom: 2rem; }
+
+    /* ── Stats row ── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.1rem 1.3rem;
+    }
+    .stat-label { font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--sub); margin-bottom: .4rem; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.orange{ color: var(--accent); }
+    .stat-value.blue  { color: var(--blue);  }
+
+    /* ── Section cards ── */
+    .section {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+      padding: 1rem 1.3rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title { font-size: .95rem; font-weight: 700; }
+
+    .section-body { padding: 1.3rem; }
+
+    /* ── Form ── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr 140px; gap: .75rem; align-items: end; }
+
+    label { font-size: .75rem; font-weight: 600; color: var(--sub); display: block; margin-bottom: 4px; letter-spacing: .04em; }
+
+    input, select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+      border-radius: 8px; background: rgba(255,255,255,.04);
+      color: var(--text); font-size: .875rem; outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    select option { background: #1a1d27; }
+
+    .btn {
+      padding: 9px 18px; border-radius: 8px; border: none;
+      font-size: .82rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-danger { background: var(--red);    color: #fff; }
+    .btn-ghost  { background: rgba(255,255,255,.06); color: var(--text); }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    thead th { text-align: left; padding: 8px 12px; font-size: .68rem; font-weight: 700;
+               letter-spacing: .08em; text-transform: uppercase; color: var(--sub);
+               border-bottom: 1px solid var(--border); }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04);
+               font-family: "SF Mono", "JetBrains Mono", monospace; font-size: .78rem; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,.02); }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px;
+             padding: 2px 9px; border-radius: 20px; font-size: .68rem; font-weight: 700; }
+    .badge.active   { background: rgba(34,197,94,.15);  color: var(--green); }
+    .badge.revoked  { background: rgba(239,68,68,.15);  color: var(--red); }
+    .badge.free     { background: rgba(148,163,184,.12); color: var(--sub); }
+    .badge.pro      { background: rgba(59,130,246,.15);  color: var(--blue); }
+    .badge.enterprise{ background: rgba(255,107,53,.15); color: var(--accent); }
+
+    /* ── Alert box ── */
+    .alert {
+      padding: 10px 14px; border-radius: 9px; font-size: .82rem;
+      font-weight: 500; line-height: 1.5; margin-bottom: 1rem;
+    }
+    .alert.ok  { background: rgba(34,197,94,.1);  border: 1px solid rgba(34,197,94,.25); color: var(--green); }
+    .alert.err { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.25); color: var(--red); }
+    .alert.info{ background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25); color: var(--blue); }
+
+    /* ── Code block ── */
+    .code-block {
+      background: rgba(0,0,0,.4); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.2rem;
+      font-family: "SF Mono", "JetBrains Mono", monospace;
+      font-size: .78rem; color: #a5f3fc;
+      overflow-x: auto; white-space: pre-wrap; line-height: 1.6;
+    }
+    .code-comment { color: #64748b; }
+    .code-key     { color: #fbbf24; }
+    .code-val     { color: #86efac; }
+    .code-string  { color: #f9a8d4; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="24" viewBox="0 0 56 64" fill="none">
+        <defs><linearGradient id="vg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FF6B35"/><stop offset="100%" stop-color="#ff9a5c"/>
+        </linearGradient></defs>
+        <path d="M28 2L4 13v17c0 14.5 10.2 28.1 24 31.2C41.8 58.1 52 44.5 52 30V13L28 2z" fill="url(#vg)"/>
+        <polygon points="21,20 39,30 21,40" fill="white"/>
+      </svg>
+      VideoCap Dev
+    </div>
+    <a class="sidebar-item active" href="#">🗝️  API Keys</a>
+    <a class="sidebar-item" href="#">📊  Analytics</a>
+    <a class="sidebar-item" href="#">📄  Docs</a>
+    <a class="sidebar-item" href="#">⚙️  Settings</a>
+    <a class="sidebar-item" href="demo_website.html" target="_blank">🌐  Demo Site</a>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main">
+    <h1 class="page-title">API Key Management</h1>
+    <p class="page-sub">Create and manage API keys for VideoCap integrations.</p>
+
+    <!-- Stats -->
+    <div class="stats" id="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Keys</div><div class="stat-value blue" id="s-total">–</div></div>
+      <div class="stat-card"><div class="stat-label">Active Keys</div><div class="stat-value green" id="s-active">–</div></div>
+      <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value orange" id="s-reqs">–</div></div>
+      <div class="stat-card"><div class="stat-label">Server</div><div class="stat-value green" id="s-health" style="font-size:1rem">Checking…</div></div>
+    </div>
+
+    <!-- Alert area -->
+    <div id="alert-area"></div>
+
+    <!-- Create key -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🔑 Create New API Key</span>
+      </div>
+      <div class="section-body">
+        <div class="form-row">
+          <div>
+            <label>Owner Name</label>
+            <input type="text" id="new-name" placeholder="Acme Corp" />
+          </div>
+          <div>
+            <label>Owner Email</label>
+            <input type="email" id="new-email" placeholder="dev@acmecorp.com" />
+          </div>
+          <div>
+            <label>Plan</label>
+            <select id="new-plan">
+              <option value="free">Free (500/mo)</option>
+              <option value="pro">Pro (10k/mo)</option>
+              <option value="enterprise">Enterprise (500k/mo)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:.75rem;">
+          <button class="btn btn-accent" onclick="createKey()">Generate API Key →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- New key result -->
+    <div id="key-result" style="display:none" class="section">
+      <div class="section-header">
+        <span class="section-title">✅ API Key Created – Save this now!</span>
+      </div>
+      <div class="section-body">
+        <div class="alert info">⚠️ This key will <strong>NOT</strong> be shown again. Copy and store it securely.</div>
+        <div class="code-block" id="new-key-display"></div>
+        <div style="margin-top:1rem;">
+          <button class="btn btn-ghost" onclick="copyKey()">📋 Copy Key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lookup keys -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🔍 Lookup Keys by Email</span>
+      </div>
+      <div class="section-body">
+        <div style="display:flex;gap:.75rem;align-items:flex-end;">
+          <div style="flex:1">
+            <label>Email address</label>
+            <input type="email" id="lookup-email" placeholder="dev@acmecorp.com" />
+          </div>
+          <button class="btn btn-accent" onclick="lookupKeys()">Look Up →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keys table -->
+    <div class="section" id="keys-table-section" style="display:none">
+      <div class="section-header">
+        <span class="section-title" id="keys-table-title">API Keys</span>
+      </div>
+      <div class="section-body" style="padding:0">
+        <table>
+          <thead>
+            <tr>
+              <th>Key ID</th>
+              <th>Owner</th>
+              <th>Plan</th>
+              <th>Status</th>
+              <th>Uses (total)</th>
+              <th>Monthly</th>
+              <th>Last Used</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="keys-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Integration guide -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">📄 Integration Guide</span>
+      </div>
+      <div class="section-body" style="display:flex;flex-direction:column;gap:1rem">
+
+        <p style="font-size:.83rem;color:var(--sub);line-height:1.6">
+          Add VideoCap to any website in <strong>3 steps</strong>. No npm install. No build step.
+        </p>
+
+        <div>
+          <p style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;color:var(--sub)">STEP 1 — Load the widget script</p>
+          <div class="code-block"><span class="code-comment">&lt;!-- Add before &lt;/body&gt; --&gt;</span>
+&lt;<span class="code-key">script</span> <span class="code-val">src</span>=<span class="code-string">"https://your-videocap-server.com/widget.js"</span>&gt;&lt;/<span class="code-key">script</span>&gt;</div>
+        </div>
+
+        <div>
+          <p style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;color:var(--sub)">STEP 2 — Add a container element</p>
+          <div class="code-block">&lt;<span class="code-key">div</span> <span class="code-val">id</span>=<span class="code-string">"videocap"</span>&gt;&lt;/<span class="code-key">div</span>&gt;</div>
+        </div>
+
+        <div>
+          <p style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;color:var(--sub)">STEP 3 — Initialise with your API key</p>
+          <div class="code-block"><span class="code-key">VideoCap</span>.render({
+  <span class="code-val">container</span>:  <span class="code-string">'#videocap'</span>,
+  <span class="code-val">apiKey</span>:    <span class="code-string">'vc_YOUR_API_KEY'</span>,
+  <span class="code-val">apiUrl</span>:    <span class="code-string">'https://your-videocap-server.com'</span>,
+  <span class="code-val">theme</span>:     <span class="code-string">'light'</span>,   <span class="code-comment">// 'light' | 'dark'</span>
+  <span class="code-val">mode</span>:      <span class="code-string">'options'</span>, <span class="code-comment">// 'options' (buttons) | 'text' (free input)</span>
+
+  <span class="code-val">onSuccess</span>: <span class="code-key">function</span>(token) {
+    <span class="code-comment">// Enable your form submit button</span>
+    console.log(<span class="code-string">'Verified ✓'</span>, token);
+  },
+  <span class="code-val">onError</span>:   <span class="code-key">function</span>(err) {
+    console.error(<span class="code-string">'Failed'</span>, err);
+  },
+});</div>
+        </div>
+
+        <div>
+          <p style="font-size:.78rem;font-weight:700;margin-bottom:.5rem;color:var(--sub)">SERVER-SIDE — Verify the token in your backend (recommended)</p>
+          <div class="code-block"><span class="code-comment"># Python (Flask / FastAPI / Django)</span>
+import requests
+
+res = requests.post(
+    <span class="code-string">'https://your-videocap-server.com/api/captcha/validate'</span>,
+    headers={<span class="code-string">'X-API-Key'</span>: <span class="code-string">'vc_YOUR_API_KEY'</span>},
+    json={<span class="code-string">'token'</span>: token_from_frontend, <span class="code-string">'answer'</span>: answer_from_frontend}
+)
+data = res.json()
+if not data[<span class="code-string">'success'</span>]:
+    abort(403, <span class="code-string">'CAPTCHA failed'</span>)</div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  var API = 'http://localhost:5000';
+
+  /* ── Helpers ── */
+  function showAlert(msg, type) {
+    var a = document.getElementById('alert-area');
+    a.innerHTML = '<div class="alert ' + type + '">' + msg + '</div>';
+    setTimeout(function () { a.innerHTML = ''; }, 6000);
+  }
+
+  function fmt(date) {
+    if (!date) return '—';
+    return new Date(date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  /* ── Health check ── */
+  fetch(API + '/api/health')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      document.getElementById('s-health').textContent = d.status === 'healthy' ? '🟢 Online' : '🔴 Offline';
+    })
+    .catch(function () { document.getElementById('s-health').textContent = '🔴 Offline'; });
+
+  /* ── Create key ── */
+  var lastRawKey = '';
+
+  function createKey() {
+    var name  = document.getElementById('new-name').value.trim();
+    var email = document.getElementById('new-email').value.trim();
+    var plan  = document.getElementById('new-plan').value;
+
+    if (!name || !email) { showAlert('Please fill in name and email.', 'err'); return; }
+
+    fetch(API + '/api/keys/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner_name: name, owner_email: email, plan: plan }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success) { showAlert(d.error, 'err'); return; }
+
+        lastRawKey = d.key.raw_key;
+
+        var k = d.key;
+        document.getElementById('new-key-display').innerHTML =
+          '<span class="code-comment"># Your new API key (save it – shown once!)</span>\n' +
+          '<span class="code-val">API_KEY</span>  = <span class="code-string">"' + k.raw_key + '"</span>\n\n' +
+          '<span class="code-comment"># Key details</span>\n' +
+          '<span class="code-val">Key ID  </span> = <span class="code-string">"' + k.key_id + '"</span>\n' +
+          '<span class="code-val">Owner   </span> = <span class="code-string">"' + k.owner_name + ' &lt;' + k.owner_email + '&gt;"</span>\n' +
+          '<span class="code-val">Plan    </span> = <span class="code-string">"' + k.plan + '"</span>\n' +
+          '<span class="code-val">Monthly limit</span> = <span class="code-string">' + k.monthly_limit.toLocaleString() + ' requests</span>';
+
+        document.getElementById('key-result').style.display = 'block';
+        showAlert('✅ API key created for ' + email, 'ok');
+
+        // Update stats
+        var el = document.getElementById('s-total');
+        el.textContent = (parseInt(el.textContent) || 0) + 1;
+
+        var ea = document.getElementById('s-active');
+        ea.textContent = (parseInt(ea.textContent) || 0) + 1;
+      })
+      .catch(function (e) { showAlert('Network error: ' + e.message, 'err'); });
+  }
+
+  function copyKey() {
+    if (!lastRawKey) return;
+    navigator.clipboard.writeText(lastRawKey)
+      .then(function () { showAlert('✅ Copied to clipboard!', 'ok'); })
+      .catch(function () { showAlert('Could not copy – please select and copy manually.', 'err'); });
+  }
+
+  /* ── Lookup keys ── */
+  function lookupKeys() {
+    var email = document.getElementById('lookup-email').value.trim();
+    if (!email) { showAlert('Enter an email to look up.', 'err'); return; }
+
+    fetch(API + '/api/keys?email=' + encodeURIComponent(email))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.success) { showAlert(d.error, 'err'); return; }
+
+        var keys  = d.keys;
+        var tbody = document.getElementById('keys-tbody');
+        tbody.innerHTML = '';
+
+        if (!keys.length) {
+          showAlert('No keys found for ' + email, 'info');
+          document.getElementById('keys-table-section').style.display = 'none';
+          return;
+        }
+
+        keys.forEach(function (k) {
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + k.key_id + '</td>' +
+            '<td style="font-family:sans-serif">' + (k.owner_name || '—') + '</td>' +
+            '<td><span class="badge ' + k.plan + '">' + k.plan.toUpperCase() + '</span></td>' +
+            '<td><span class="badge ' + (k.active ? 'active' : 'revoked') + '">' +
+              (k.active ? '● Active' : '✕ Revoked') + '</span></td>' +
+            '<td>' + (k.usage_count || 0).toLocaleString() + '</td>' +
+            '<td>' + (k.monthly_uses || 0) + ' / ' + (k.monthly_limit || '–') + '</td>' +
+            '<td style="font-family:sans-serif">' + fmt(k.last_used_at) + '</td>' +
+            '<td><button class="btn btn-danger" style="padding:5px 10px;font-size:.72rem" ' +
+              'onclick="revokeKey(\'' + k.key_id + '\',' + 'this)">Revoke</button></td>';
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('keys-table-title').textContent =
+          'API Keys for ' + email + ' (' + keys.length + ')';
+        document.getElementById('keys-table-section').style.display = 'block';
+
+        // Update stats
+        document.getElementById('s-total').textContent  = keys.length;
+        document.getElementById('s-active').textContent = keys.filter(function (k) { return k.active; }).length;
+        document.getElementById('s-reqs').textContent   =
+          keys.reduce(function (acc, k) { return acc + (k.usage_count || 0); }, 0).toLocaleString();
+      })
+      .catch(function (e) { showAlert('Network error: ' + e.message, 'err'); });
+  }
+
+  /* ── Revoke ── */
+  function revokeKey(keyId, btn) {
+    if (!confirm('Revoke key ' + keyId + '? This cannot be undone.')) return;
+    fetch(API + '/api/keys/' + keyId + '/revoke', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.success) {
+          btn.closest('tr').querySelector('.badge.active').className = 'badge revoked';
+          btn.closest('tr').querySelector('.badge.revoked').textContent = '✕ Revoked';
+          btn.disabled = true;
+          showAlert('✅ Key ' + keyId + ' revoked.', 'ok');
+        } else {
+          showAlert(d.error, 'err');
+        }
+      })
+      .catch(function (e) { showAlert('Network error: ' + e.message, 'err'); });
+  }
+</script>
+</body>
+</html>
