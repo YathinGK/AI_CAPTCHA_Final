@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: videocap-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MONGODB_CONNECTION_STRING
+        sync: false          # paste your MongoDB Atlas URI here
+      - key: PYTHON_VERSION
+        value: 3.11.0

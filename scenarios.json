@@ -1,0 +1,293 @@
+{
+  "version": "1.0",
+  "last_updated": "2024-01-01T00:00:00",
+  "description": "Video CAPTCHA scenario definitions. New scenarios are auto-added via Gemini API.",
+  "scenarios": [
+    {
+      "id": "traffic_light",
+      "name": "Traffic Light",
+      "description": "A traffic light changes from one color to another mid-video",
+      "renderer": "traffic_light",
+      "background": "street",
+      "object_config": {
+        "x_ratio": 0.5,
+        "y_offset": 50
+      },
+      "animation": {
+        "type": "state_change",
+        "states": ["red", "yellow", "green"]
+      },
+      "questions": [
+        {
+          "template": "Should cars stop or go when the light is {next_state}?",
+          "answer_map": {"red": "stop", "yellow": "stop", "green": "go"},
+          "answer_map_key": "next_state"
+        },
+        {
+          "template": "Is it safe to cross the street when the light turns {next_state}?",
+          "answer_map": {"red": "yes", "yellow": "no", "green": "no"},
+          "answer_map_key": "next_state"
+        },
+        {
+          "template": "What should a driver do when they see this light change?",
+          "answer_map": {"red": "wait", "yellow": "slow", "green": "go"},
+          "answer_map_key": "next_state"
+        },
+        {
+          "template": "Can pedestrians cross safely at the end?",
+          "answer_map": {"red": "yes", "yellow": "no", "green": "no"},
+          "answer_map_key": "next_state"
+        }
+      ]
+    },
+    {
+      "id": "person_walking",
+      "name": "Person Walking",
+      "description": "A stick-figure person walks horizontally across a street scene",
+      "renderer": "linear_horizontal",
+      "background": "street",
+      "object": "person",
+      "object_config": {
+        "y_ratio": 0.583
+      },
+      "animation": {
+        "type": "linear_horizontal",
+        "direction": "random"
+      },
+      "questions": [
+        {
+          "template": "Is the person going towards the left side or right side of the screen?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "If you were standing behind this person, which way would you walk?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Is this person coming towards you or walking away?",
+          "answer": "away"
+        },
+        {
+          "template": "Would this person reach the left edge or right edge first?",
+          "answer_key": "direction"
+        }
+      ]
+    },
+    {
+      "id": "car_moving",
+      "name": "Car Moving",
+      "description": "A simple car drives horizontally across a road",
+      "renderer": "linear_horizontal",
+      "background": "street",
+      "object": "car",
+      "object_config": {
+        "y_ratio": 0.542,
+        "color_choices": [
+          [0, 0, 200],
+          [200, 0, 0],
+          [0, 150, 0],
+          [200, 200, 0]
+        ]
+      },
+      "animation": {
+        "type": "linear_horizontal",
+        "direction": "random"
+      },
+      "questions": [
+        {
+          "template": "Is the car heading towards the left or right?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "If you were the driver, which direction would your steering wheel turn?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Is the car approaching or leaving?",
+          "answer": "leaving"
+        },
+        {
+          "template": "Which side of the road will the car reach?",
+          "answer_key": "direction"
+        }
+      ]
+    },
+    {
+      "id": "door_opening",
+      "name": "Door Opening",
+      "description": "A wooden door swings open from closed to 70 degrees",
+      "renderer": "door_animation",
+      "background": "indoor",
+      "object_config": {
+        "x_ratio": 0.4375,
+        "y_ratio": 0.333,
+        "max_angle": 70
+      },
+      "animation": {
+        "type": "door_open"
+      },
+      "questions": [
+        {
+          "template": "Is someone entering or exiting through this door?",
+          "answer": "entering"
+        },
+        {
+          "template": "Would you push or pull to make this door move?",
+          "answer": "pull"
+        },
+        {
+          "template": "Is the room becoming more visible or less visible?",
+          "answer": "more"
+        },
+        {
+          "template": "Can you walk through this door at the end?",
+          "answer": "yes"
+        }
+      ]
+    },
+    {
+      "id": "ball_rolling",
+      "name": "Ball Rolling",
+      "description": "A colored ball rolls horizontally across a grassy field",
+      "renderer": "linear_horizontal",
+      "background": "grass",
+      "object": "ball",
+      "object_config": {
+        "y_ratio": 0.667,
+        "radius": 12,
+        "color_choices": [
+          [0, 100, 255],
+          [0, 200, 0],
+          [200, 0, 200]
+        ]
+      },
+      "animation": {
+        "type": "linear_horizontal",
+        "direction": "random"
+      },
+      "questions": [
+        {
+          "template": "If you wanted to catch this ball, which way would you run?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Is the ball moving towards the left or right?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Would you need to look left or right to follow this ball?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Is the ball coming to you or going away?",
+          "answer": "away"
+        }
+      ]
+    },
+    {
+      "id": "bird_flying",
+      "name": "Bird Flying",
+      "description": "A bird flies horizontally across the sky with a wave motion and flapping wings",
+      "renderer": "wave_horizontal",
+      "background": "gradient_sky",
+      "object": "bird",
+      "object_config": {
+        "y_base": 60,
+        "y_amplitude": 20,
+        "wing_speed": 0.5
+      },
+      "animation": {
+        "type": "wave_horizontal",
+        "direction": "random",
+        "wave_periods": 4
+      },
+      "questions": [
+        {
+          "template": "Is the bird flying towards the left or right side?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "If you wanted to follow this bird, which way would you turn your head?",
+          "answer_key": "direction"
+        },
+        {
+          "template": "Is the bird coming closer or flying away?",
+          "answer": "away"
+        },
+        {
+          "template": "Which direction is the bird traveling?",
+          "answer_key": "direction"
+        }
+      ]
+    },
+    {
+      "id": "rain_falling",
+      "name": "Rain Falling",
+      "description": "Rain drops fall across a gray overcast sky",
+      "renderer": "particle_system",
+      "background": "cloudy",
+      "particle_config": {
+        "num_particles": 30,
+        "particle_type": "rain_drop",
+        "x_speed_variance": 37,
+        "x_frame_speed": 5,
+        "y_row_offset": 23,
+        "y_speed": 8
+      },
+      "questions": [
+        {
+          "template": "Should you take an umbrella outside?",
+          "answer": "yes"
+        },
+        {
+          "template": "Is it a good day for a picnic?",
+          "answer": "no"
+        },
+        {
+          "template": "Would you get wet if you went outside?",
+          "answer": "yes"
+        },
+        {
+          "template": "Is the weather sunny or rainy?",
+          "answer": "rainy"
+        }
+      ]
+    },
+    {
+      "id": "sun_rising",
+      "name": "Sun Rising",
+      "description": "The sun rises from near the horizon up into the sky",
+      "renderer": "vertical_rise",
+      "background": "gradient_sky",
+      "object": "sun",
+      "object_config": {
+        "x_ratio": 0.5,
+        "start_y_ratio": 0.917,
+        "end_y_ratio": 0.167,
+        "radius": 20
+      },
+      "animation": {
+        "type": "vertical_rise",
+        "direction": "up"
+      },
+      "questions": [
+        {
+          "template": "Is it morning or evening?",
+          "answer": "morning"
+        },
+        {
+          "template": "Is the day starting or ending?",
+          "answer": "starting"
+        },
+        {
+          "template": "Would you say good morning or good night?",
+          "answer": "morning"
+        },
+        {
+          "template": "Is it getting brighter or darker?",
+          "answer": "brighter"
+        }
+      ]
+    }
+  ]
+}
